@@ -1,1 +1,26 @@
-
+SELECT
+  `Gender`,
+  SUM(`Total Amount`) as total_sales,
+  COUNT(DISTINCT `Transaction ID`) as transaction_count,
+  AVG(`Total Amount`) as avg_transaction_value,
+  COUNT(DISTINCT `Customer ID`) as unique_customers,
+  SUM(`Quantity`) as total_items_purchased,
+  ROUND(
+    SUM(`Total Amount`)
+      * 100.0
+      / (
+        SELECT
+          SUM(`Total Amount`)
+        FROM
+          `retail`.`sales`.`retail_sales_dataset`
+      ),
+    2
+  ) as pct_of_total_sales
+FROM
+  `retail`.`sales`.`retail_sales_dataset`
+WHERE
+  `Gender` IS NOT NULL
+GROUP BY
+  `Gender`
+ORDER BY
+  total_sales DESC
