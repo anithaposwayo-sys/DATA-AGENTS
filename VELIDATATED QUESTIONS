@@ -37,4 +37,91 @@ FROM
 GROUP BY
   `Product Category`
 ORDER BY
-  total_revenue DESC
+  total_revenue DESC;
+
+
+
+
+WITH ranked_categories AS (
+  SELECT
+    CASE
+      WHEN
+        `Age` >= 18
+        AND `Age` <= 24
+      THEN
+        '18-24'
+      WHEN
+        `Age` >= 25
+        AND `Age` <= 34
+      THEN
+        '25-34'
+      WHEN
+        `Age` >= 35
+        AND `Age` <= 44
+      THEN
+        '35-44'
+      WHEN
+        `Age` >= 45
+        AND `Age` <= 54
+      THEN
+        '45-54'
+      WHEN
+        `Age` >= 55
+        AND `Age` <= 64
+      THEN
+        '55-64'
+    END as age_group,
+    `Product Category`,
+    SUM(`Total Amount`) as total_sales,
+    COUNT(DISTINCT `Transaction ID`) as transaction_count,
+    ROW_NUMBER() OVER (
+        PARTITION BY
+          CASE
+            WHEN
+              `Age` >= 18
+              AND `Age` <= 24
+            THEN
+              '18-24'
+            WHEN
+              `Age` >= 25
+              AND `Age` <= 34
+            THEN
+              '25-34'
+            WHEN
+              `Age` >= 35
+              AND `Age` <= 44
+            THEN
+              '35-44'
+            WHEN
+              `Age` >= 45
+              AND `Age` <= 54
+            THEN
+              '45-54'
+            WHEN
+              `Age` >= 55
+              AND `Age` <= 64
+            THEN
+              '55-64'
+          END
+        ORDER BY SUM(`Total Amount`) DESC
+      ) as rank
+  FROM
+    `retail`.`sales`.`retail_sales_dataset`
+  WHERE
+    `Age` IS NOT NULL
+    AND `Product Category` IS NOT NULL
+  GROUP BY
+    age_group,
+    `Product Category`
+)
+SELECT
+  age_group,
+  `Product Category` as top_category,
+  total_sales,
+  transaction_count
+FROM
+  ranked_categories
+WHERE
+  rank = 1
+ORDER BY
+  age_group
